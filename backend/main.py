@@ -83,16 +83,20 @@ async def _get_or_load_frames(key: str):
         race_frames_cache.move_to_end(key)
         return race_frames_cache[key]
 
+    # EVICT OLD RACE FIRST (before loading new one)
+    if len(race_frames_cache) >= MAX_FRAMES_CACHE:
+        evicted_key = next(iter(race_frames_cache))
+        race_frames_cache.popitem(last=False)
+        print(f"LRU evicted frames cache for {evicted_key} BEFORE loading {key}")
+        import gc
+        gc.collect()  # Force garbage collection
+
     loop = asyncio.get_event_loop()
     frames = await loop.run_in_executor(_io_executor, _read_frames_file, key)
 
     if frames is not None:
         race_frames_cache[key] = frames
         race_frames_cache.move_to_end(key)
-        if len(race_frames_cache) > MAX_FRAMES_CACHE:
-            evicted = next(iter(race_frames_cache))
-            race_frames_cache.popitem(last=False)
-            print(f"LRU evicted frames cache for {evicted}")
 
     return frames
 
