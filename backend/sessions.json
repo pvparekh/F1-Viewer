@@ -1,7 +1,7 @@
 [
+  { "year": 2024, "round": 16, "name": "Italian Grand Prix",  "circuit": "Autodromo Nazionale di Monza" },
+  { "year": 2024, "round": 12, "name": "British Grand Prix",  "circuit": "Silverstone Circuit" },
   { "year": 2023, "round": 8,  "name": "Monaco Grand Prix",   "circuit": "Circuit de Monaco" },
   { "year": 2023, "round": 10, "name": "British Grand Prix",  "circuit": "Silverstone Circuit" },
-  { "year": 2024, "round": 1,  "name": "Bahrain Grand Prix",  "circuit": "Bahrain International Circuit" },
-  { "year": 2024, "round": 12, "name": "British Grand Prix",  "circuit": "Silverstone Circuit" },
-  { "year": 2024, "round": 16, "name": "Italian Grand Prix",  "circuit": "Autodromo Nazionale di Monza" }
+  { "year": 2024, "round": 1,  "name": "Bahrain Grand Prix",  "circuit": "Bahrain International Circuit" }
 ]

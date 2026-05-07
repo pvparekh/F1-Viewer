@@ -51,6 +51,7 @@ export default function App() {
     isPlaying,
     isLoading,
     isEnded,
+    errorMessage,
     sendAction,
   } = useRaceWebSocket(selectedRace?.year ?? null, selectedRace?.round ?? null);
 
@@ -329,6 +330,36 @@ export default function App() {
               />
             )}
           </AnimatePresence>
+
+          {/* Connection error overlay */}
+          {errorMessage && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.85)' }}>
+              <div
+                className="flex flex-col items-center gap-5 rounded-2xl px-10 py-8 text-center"
+                style={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)', maxWidth: 400 }}
+              >
+                <div
+                  className="flex items-center justify-center rounded-full"
+                  style={{ width: 48, height: 48, background: 'rgba(225,6,0,0.12)', border: '1px solid rgba(225,6,0,0.3)' }}
+                >
+                  <svg viewBox="0 0 20 20" fill="#e10600" style={{ width: 22, height: 22 }}>
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-.75-10.5a.75.75 0 011.5 0v4a.75.75 0 01-1.5 0v-4zm.75 7a1 1 0 110-2 1 1 0 010 2z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="font-semibold text-white" style={{ fontSize: 15 }}>Viewer Unavailable</p>
+                  <p className="text-gray-400 leading-snug" style={{ fontSize: 13 }}>{errorMessage}</p>
+                </div>
+                <button
+                  onClick={handleBackToLanding}
+                  className="rounded-lg font-semibold transition-colors duration-150 text-white"
+                  style={{ padding: '10px 24px', fontSize: 13, background: '#e10600' }}
+                >
+                  Return to Race Selection
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

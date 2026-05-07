@@ -14,6 +14,7 @@ export interface UseRaceWebSocketReturn {
   isPlaying: boolean;
   isLoading: boolean;
   isEnded: boolean;
+  errorMessage: string | null;
   sendAction: (action: ClientAction) => void;
 }
 
@@ -41,6 +42,7 @@ export function useRaceWebSocket(
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -74,6 +76,7 @@ export function useRaceWebSocket(
     setIsPlaying(false);
     setIsLoading(false);
     setIsEnded(false);
+    setErrorMessage(null);
     reconnectDelayRef.current = 1_000;
     shouldReconnectRef.current = true;
 
@@ -105,6 +108,10 @@ export function useRaceWebSocket(
           if (status === 'ended') {
             setIsPlaying(false);
             setIsEnded(true);
+          }
+          if (status === 'error') {
+            setIsLoading(false);
+            setErrorMessage((msg.message as string | undefined) ?? 'Connection error');
           }
         } else if (msg.type === 'total_frames') {
           setTotalFrames(msg.total_frames as number);
@@ -169,6 +176,7 @@ export function useRaceWebSocket(
     isPlaying,
     isLoading,
     isEnded,
+    errorMessage,
     sendAction,
   };
 }

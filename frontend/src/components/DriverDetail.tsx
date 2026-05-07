@@ -23,6 +23,15 @@ const DRIVER_NAMES: Record<string, string> = {
   DOO: 'Jack Doohan', HAD: 'Isack Hadjar', COL: 'Franco Colapinto',
 };
 
+const DRIVER_NUMBERS: Record<string, string> = {
+  VER: '1',  PER: '11', HAM: '44', RUS: '63', LEC: '16',
+  SAI: '55', NOR: '4',  PIA: '81', ALO: '14', STR: '18',
+  GAS: '10', OCO: '31', ALB: '23', SAR: '2',  BOT: '77',
+  ZHO: '24', TSU: '22', RIC: '3',  MAG: '20', HUL: '27',
+  DEV: '21', LAW: '40', ANT: '12', BEA: '50', DOO: '61',
+  HAD: '6',  COL: '43',
+};
+
 function formatLapTime(totalSeconds: number): string {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
@@ -60,18 +69,30 @@ function computeChartData(code: string, buf: FrameBuffer) {
 
   const lapMap: Record<number, { pos: number; behind: number; t: number }> = {};
   for (const f of driverFrames) {
+    const ex = lapMap[f.lap];
     lapMap[f.lap] = {
       pos: f.drivers[code].pos,
       behind: Math.max(0, f.drivers[code].pos - 1),
-      t: f.t,
+      // Track the earliest timestamp per lap — gives true lap start time for
+      // accurate lap-time computation (lapN+1.firstT − lapN.firstT = lapN duration).
+      t: ex ? Math.min(ex.t, f.t) : f.t,
     };
   }
   const lapSeries = Object.entries(lapMap)
     .sort(([a], [b]) => Number(a) - Number(b))
     .map(([lap, v]) => ({ lap: Number(lap), pos: v.pos, behind: v.behind, t: v.t }));
 
-  const rawLapTimes = lapSeries.slice(1).map((curr, i) => curr.t - lapSeries[i].t);
-  const validLapTimes = rawLapTimes.filter(t => t > 40 && t < 250);
+  const rawLapTimes = lapSeries.slice(1).map((curr, i) => {
+    const prev = lapSeries[i];
+    const lapDiff = curr.lap - prev.lap;
+    // Skip non-consecutive entries (buffer gaps or data holes > 3 laps)
+    if (lapDiff <= 0 || lapDiff > 3) return null;
+    // Normalise by elapsed laps in case a minor gap exists
+    return (curr.t - prev.t) / lapDiff;
+  });
+  // 600 s upper bound covers safety-car laps (~350 s at Silverstone) while
+  // still excluding red-flag stoppages (typically 1200+ s).
+  const validLapTimes = rawLapTimes.filter((t): t is number => t !== null && t > 40 && t < 600);
   const fastestLap = validLapTimes.length > 0 ? Math.min(...validLapTimes) : null;
 
   const positions = driverFrames.map(f => f.drivers[code].pos);
@@ -150,10 +171,29 @@ export default function DriverDetail({
               className="flex items-center justify-between px-5 py-4 flex-shrink-0"
               style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-1 h-10 rounded-full flex-shrink-0" style={{ backgroundColor: driverColor }} />
-                <div className="flex flex-col leading-tight">
-                  <span className="font-bold text-white" style={{ fontSize: 22, lineHeight: 1.2 }}>
+              <div className="flex items-center gap-4 min-w-0">
+                {/* Racing car number — Orbitron for that premium motorsport look */}
+                <div
+                  className="flex-shrink-0 leading-none select-none"
+                  style={{
+                    fontFamily: "'Orbitron', monospace",
+                    fontWeight: 900,
+                    fontSize: 46,
+                    color: driverColor,
+                    letterSpacing: '-0.03em',
+                    textShadow: `0 0 28px ${driverColor}55`,
+                    minWidth: 52,
+                    textAlign: 'center',
+                  }}
+                >
+                  {DRIVER_NUMBERS[driverCode] ?? '?'}
+                </div>
+
+                <div className="flex flex-col leading-tight min-w-0">
+                  <span
+                    className="font-bold text-white truncate"
+                    style={{ fontSize: 18, lineHeight: 1.2 }}
+                  >
                     {DRIVER_NAMES[driverCode] ?? driverCode}
                   </span>
                   <span className="text-gray-600 text-xs mt-0.5">
@@ -161,10 +201,12 @@ export default function DriverDetail({
                   </span>
                 </div>
               </div>
+
               <button
                 onClick={onClose}
                 aria-label="Close"
-                className="w-7 h-7 flex items-center justify-center rounded text-gray-600 hover:text-white hover:bg-white/8 transition-colors text-lg"
+                className="w-7 h-7 flex items-center justify-center rounded text-gray-600 hover:text-white transition-colors text-lg flex-shrink-0 ml-2"
+                style={{ background: 'transparent' }}
               >
                 ✕
               </button>

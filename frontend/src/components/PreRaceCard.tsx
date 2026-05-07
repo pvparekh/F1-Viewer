@@ -177,7 +177,7 @@ export default function PreRaceCard({
                   className="uppercase text-gray-500"
                   style={{ fontSize: 10, letterSpacing: '0.25em' }}
                 >
-                  Backend waking up…
+                  Loading race data…
                 </span>
                 <span style={{ fontSize: 10, color: '#E10600', fontVariantNumeric: 'tabular-nums', minWidth: 28, textAlign: 'right' }}>
                   {pct}%

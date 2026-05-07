@@ -36,6 +36,10 @@ race_frames_cache: OrderedDict = OrderedDict()
 race_results_cache: dict = {}
 MAX_FRAMES_CACHE = 1
 
+# Free-tier memory guard: only one race can stream at a time.
+active_websocket_connections: int = 0
+MAX_CONCURRENT_CONNECTIONS: int = 1
+
 _io_executor = ThreadPoolExecutor(max_workers=2)
 
 
@@ -202,78 +206,94 @@ async def get_race_results(year: int, round: int):
 
 @app.websocket("/ws/sessions/{year}/{round}/replay")
 async def websocket_replay(websocket: WebSocket, year: int, round: int):
+    global active_websocket_connections
     await websocket.accept()
-    key = f"{year}_{round}"
 
+    # ── Capacity check — reject before touching any race data ─────────────
+    if active_websocket_connections >= MAX_CONCURRENT_CONNECTIONS:
+        await websocket.send_json({
+            "type": "status",
+            "status": "error",
+            "message": "Server at capacity — only 1 viewer at a time on the free tier. Close other tabs and try again.",
+        })
+        await websocket.close(code=1008)
+        return
+
+    key = f"{year}_{round}"
     if key not in race_meta_cache:
         await websocket.send_json({"type": "status", "status": "error", "message": "Race not found"})
         await websocket.close(code=1008)
         return
 
-    await websocket.send_json({"type": "status", "status": "loading"})
+    # ── Take a viewer slot; always release it when the connection closes ──
+    active_websocket_connections += 1
+    try:
+        await websocket.send_json({"type": "status", "status": "loading"})
 
-    frames = await _get_or_load_frames(key)
-    if frames is None:
-        await websocket.send_json({"type": "status", "status": "error", "message": "Frames file missing"})
-        await websocket.close(code=1011)
-        return
+        frames = await _get_or_load_frames(key)
+        if frames is None:
+            await websocket.send_json({"type": "status", "status": "error", "message": "Frames file missing"})
+            await websocket.close(code=1011)
+            return
 
-    await websocket.send_json({"type": "total_frames", "total_frames": len(frames)})
-    await websocket.send_json({"type": "status", "status": "ready"})
+        await websocket.send_json({"type": "total_frames", "total_frames": len(frames)})
+        await websocket.send_json({"type": "status", "status": "ready"})
 
-    state = {"frame": 0, "speed": 1.0, "playing": False}
+        state = {"frame": 0, "speed": 1.0, "playing": False}
 
-    async def message_handler():
+        async def message_handler():
+            try:
+                while True:
+                    msg = await websocket.receive_json()
+                    action = msg.get("action")
+                    if action == "play":
+                        state["frame"] = int(msg.get("from_frame", state["frame"]))
+                        state["speed"] = float(msg.get("speed", state["speed"]))
+                        state["playing"] = True
+                    elif action == "pause":
+                        state["playing"] = False
+                    elif action == "seek":
+                        state["frame"] = int(msg.get("to_frame", state["frame"]))
+                    elif action == "set_speed":
+                        state["speed"] = float(msg.get("speed", state["speed"]))
+            except WebSocketDisconnect:
+                pass
+            except Exception:
+                pass
+
+        recv_task = asyncio.create_task(message_handler())
+
         try:
             while True:
-                msg = await websocket.receive_json()
-                action = msg.get("action")
-                if action == "play":
-                    state["frame"] = int(msg.get("from_frame", state["frame"]))
-                    state["speed"] = float(msg.get("speed", state["speed"]))
-                    state["playing"] = True
-                elif action == "pause":
-                    state["playing"] = False
-                elif action == "seek":
-                    state["frame"] = int(msg.get("to_frame", state["frame"]))
-                elif action == "set_speed":
-                    state["speed"] = float(msg.get("speed", state["speed"]))
-        except WebSocketDisconnect:
-            pass
-        except Exception:
-            pass
-
-    recv_task = asyncio.create_task(message_handler())
-
-    try:
-        while True:
-            if recv_task.done():
-                break
-
-            if state["playing"]:
-                idx = state["frame"]
-                if idx >= len(frames):
-                    await websocket.send_json({"type": "status", "status": "ended"})
+                if recv_task.done():
                     break
 
-                frame = frames[idx]
-                await websocket.send_json({
-                    "type": "frame",
-                    "frame_index": idx,
-                    "t": frame["t"],
-                    "lap": frame["lap"],
-                    "drivers": frame["drivers"],
-                })
-                state["frame"] = idx + 1
-                delay = 0.1 / max(0.1, state["speed"])
-                await asyncio.sleep(delay)
-            else:
-                await asyncio.sleep(0.05)
-    except Exception:
-        pass
-    finally:
-        recv_task.cancel()
-        try:
-            await recv_task
-        except (asyncio.CancelledError, Exception):
+                if state["playing"]:
+                    idx = state["frame"]
+                    if idx >= len(frames):
+                        await websocket.send_json({"type": "status", "status": "ended"})
+                        break
+
+                    frame = frames[idx]
+                    await websocket.send_json({
+                        "type": "frame",
+                        "frame_index": idx,
+                        "t": frame["t"],
+                        "lap": frame["lap"],
+                        "drivers": frame["drivers"],
+                    })
+                    state["frame"] = idx + 1
+                    delay = 0.1 / max(0.1, state["speed"])
+                    await asyncio.sleep(delay)
+                else:
+                    await asyncio.sleep(0.05)
+        except Exception:
             pass
+        finally:
+            recv_task.cancel()
+            try:
+                await recv_task
+            except (asyncio.CancelledError, Exception):
+                pass
+    finally:
+        active_websocket_connections -= 1

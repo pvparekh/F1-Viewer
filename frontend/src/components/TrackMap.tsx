@@ -548,8 +548,10 @@ const TrackMap = memo(function TrackMap({
                 inner.setAttribute('opacity', '0.8');
               }
             } else {
-              outer.setAttribute('opacity', '0');
-              inner.setAttribute('opacity', '0');
+              outer.setAttribute('cx', '-9999');
+              outer.setAttribute('cy', '-9999');
+              inner.setAttribute('cx', '-9999');
+              inner.setAttribute('cy', '-9999');
             }
           }
         }
