@@ -28,11 +28,13 @@ pip install -r packages.txt
 
 ## Usage
 
-Run the viewer with the season and race round you'd like:
+Run the viewer with the season and race round you'd like (round 3 was the 2025 Japenese Grand Prix):
 
 ```bash
-python RaceView.py --year 2025 --round 12
+python RaceView.py --year 2025 --round 3
 ```
+
+**Note: it may take 10-20 minutes or more to load the telemetry data and start watching
 
 Optional parameters:
 - `--refresh-data`: Force re-fetch telemetry (bypasses cache)

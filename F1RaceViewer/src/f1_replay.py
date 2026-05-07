@@ -124,7 +124,7 @@ class ReplayWindow(arcade.Window):
                 0, self.width, 0, self.height, self.bg_img
             )
 
-        track_rgb = (150, 150, 150)
+        track_rgb = arcade.color.BLACK
 
         if len(self.screen_inner) > 1:
             arcade.draw_line_strip(self.screen_inner, track_rgb, 4)
@@ -136,7 +136,7 @@ class ReplayWindow(arcade.Window):
             if p.get("rel_dist", 0) == 1:
                 continue
             px, py = self._world_to_view(p["x"], p["y"])
-            clr = self.colors.get(code, arcade.color.WHITE)
+            clr = self.colors.get(code, arcade.color.CYBER_YELLOW)
             arcade.draw_circle_filled(px, py, 6, clr)
 
         lead_code = max(
@@ -163,7 +163,7 @@ class ReplayWindow(arcade.Window):
         arcade.draw_text(
             f"Race Time: {tlabel}",
             20, self.height - 80,
-            arcade.color.WHITE, 20,
+            arcade.color.CELESTE, 20,
             anchor_y="top"
         )
 
@@ -173,7 +173,7 @@ class ReplayWindow(arcade.Window):
         arcade.draw_text(
             "Leaderboard",
             right_x, top_y,
-            arcade.color.WHITE, 20,
+            arcade.color.AQUAMARINE, 20,
             bold=True,
             anchor_x="right",
             anchor_y="top"
@@ -181,7 +181,7 @@ class ReplayWindow(arcade.Window):
 
         rows = []
         for code, p in frame["drivers"].items():
-            rows.append((code, self.colors.get(code, arcade.color.WHITE), p))
+            rows.append((code, self.colors.get(code, arcade.color.CYBER_YELLOW), p))
 
         rows.sort(key=lambda r: r[2].get("dist", 999), reverse=True)
 
@@ -213,7 +213,7 @@ class ReplayWindow(arcade.Window):
                 txt,
                 lx,
                 ly - (i * 25),
-                arcade.color.LIGHT_GRAY if i > 0 else arcade.color.WHITE,
+                arcade.color.AQUAMARINE if i > 0 else arcade.color.CYBER_YELLOW,
                 14,
                 bold=(i == 0)
             )
@@ -247,7 +247,6 @@ class ReplayWindow(arcade.Window):
             self.speed_factor = 4.0
 
 
-#driver_ids
 def launch_replay( frames, lap_example, drivers_ids, title, color_map, playback_speed=1.0):
     window = ReplayWindow (
         frames=frames,

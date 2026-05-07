@@ -1,0 +1,34 @@
+# ── Python ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+ENV/
+env/
+.env
+*.env
+
+# ── FastF1 cache (large, regenerable) ───────────────────────────
+F1RaceViewer/.fastf1-cache/
+
+# ── Node / Frontend ─────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# ── IDE / OS ────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Misc ────────────────────────────────────────────────────────
+*.log
+*.tmp

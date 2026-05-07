@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background-color: #0a0a0a;
+    color: #ffffff;
+    font-family: 'Inter', system-ui, sans-serif;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@layer utilities {
+  .transition-color-opacity {
+    transition: color 200ms ease, opacity 200ms ease, background-color 200ms ease;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes follow-ring-pulse {
+  0%, 100% { r: 12px; opacity: 0.5; }
+  50%       { r: 17px; opacity: 0.1; }
+}
+
+.follow-ring-pulse {
+  animation: follow-ring-pulse 2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ── Shimmer loading skeleton ──────────────────────────────────── */
+
+@keyframes shimmer-sweep {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.shimmer-loading {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 400px 100%;
+  animation: shimmer-sweep 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* ── Micro-interactions ────────────────────────────────────────── */
+
+::selection {
+  background: rgba(225, 6, 0, 0.35);
+  color: #ffffff;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus-visible: keyboard-only focus ring */
+:focus-visible {
+  outline: 2px solid rgba(225, 6, 0, 0.7);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove default focus ring on mouse interaction */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Reduced motion: disable all animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
