@@ -25,18 +25,21 @@ export default function PreRaceCard({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
     if (isReady) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setTicks(LOAD_DURATION_MS / TICK_MS); // snap to 100%
+      setTicks(LOAD_DURATION_MS / TICK_MS);
       return;
     }
+
+    setTicks(0);
     intervalRef.current = setInterval(() => {
       setTicks((t) => Math.min(t + 1, LOAD_DURATION_MS / TICK_MS));
     }, TICK_MS);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isReady]);
+  }, [isReady, raceName]);
 
   const maxTicks = LOAD_DURATION_MS / TICK_MS;
   const pct = isReady ? 100 : Math.min(Math.round((ticks / maxTicks) * 100), 99);
