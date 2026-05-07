@@ -34,7 +34,7 @@ except Exception:
 race_meta_cache: dict = {}
 race_frames_cache: OrderedDict = OrderedDict()
 race_results_cache: dict = {}
-MAX_FRAMES_CACHE = 3
+MAX_FRAMES_CACHE = 1
 
 _io_executor = ThreadPoolExecutor(max_workers=2)
 
