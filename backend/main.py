@@ -62,7 +62,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://*.vercel.app",  # Allow Vercel
+        "https://formulavision.vercel.app",  # Allow Vercel
     ],
     allow_credentials=True,
     allow_methods=["*"],
