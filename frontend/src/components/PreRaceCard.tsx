@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 
 interface Props {
   raceName: string;
@@ -9,6 +10,9 @@ interface Props {
   onStart: () => void;
 }
 
+const LOAD_DURATION_MS = 17_000;
+const TICK_MS = 100;
+
 export default function PreRaceCard({
   raceName,
   year,
@@ -17,6 +21,26 @@ export default function PreRaceCard({
   isReady,
   onStart,
 }: Props) {
+  const [ticks, setTicks] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (isReady) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setTicks(LOAD_DURATION_MS / TICK_MS); // snap to 100%
+      return;
+    }
+    intervalRef.current = setInterval(() => {
+      setTicks((t) => Math.min(t + 1, LOAD_DURATION_MS / TICK_MS));
+    }, TICK_MS);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isReady]);
+
+  const maxTicks = LOAD_DURATION_MS / TICK_MS;
+  const pct = isReady ? 100 : Math.min(Math.round((ticks / maxTicks) * 100), 99);
+
   return (
     <motion.div
       key="prerace-card"
@@ -101,39 +125,77 @@ export default function PreRaceCard({
           transition={{ delay: 0.34, duration: 0.4 }}
           className="flex flex-col items-center gap-3"
         >
-          <motion.button
-            whileHover={isReady ? { scale: 1.04 } : undefined}
-            whileTap={isReady ? { scale: 0.97 } : undefined}
-            transition={{ type: 'spring', stiffness: 400, damping: 22 }}
-            onClick={isReady ? onStart : undefined}
-            disabled={!isReady}
-            className={`
-              rounded font-bold uppercase tracking-widest
-              transition-colors duration-200
-              ${isReady
-                ? 'bg-[#E10600] text-white hover:bg-[#c80500] cursor-pointer'
-                : 'bg-[#1e0000] text-[#4a1a1a] cursor-not-allowed'
-              }
-            `}
-            style={{ fontSize: 15, height: 52, width: 200, letterSpacing: '0.15em' }}
-          >
-            {isReady ? 'WATCH RACE' : (
-              <span className="animate-pulse text-sm">Loading…</span>
-            )}
-          </motion.button>
+          {isReady ? (
+            <>
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                onClick={onStart}
+                className="rounded font-bold uppercase tracking-widest bg-[#E10600] text-white hover:bg-[#c80500] cursor-pointer transition-colors duration-200"
+                style={{ fontSize: 15, height: 52, width: 200, letterSpacing: '0.15em' }}
+              >
+                WATCH RACE
+              </motion.button>
 
-          {isReady && (
-            <motion.p
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="text-[10px] uppercase tracking-widest text-gray-700"
+              >
+                or press <kbd
+                  className="px-1.5 py-0.5 rounded text-gray-600"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                >Space</kbd>
+              </motion.p>
+            </>
+          ) : (
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="text-[10px] uppercase tracking-widest text-gray-700"
+              transition={{ delay: 0.4 }}
+              className="flex flex-col items-center gap-3"
+              style={{ width: 260 }}
             >
-              or press <kbd
-                className="px-1.5 py-0.5 rounded text-gray-600"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-              >Space</kbd>
-            </motion.p>
+              {/* Spinner + label */}
+              <div className="flex items-center gap-2.5">
+                <svg
+                  className="animate-spin"
+                  style={{ width: 14, height: 14, color: '#E10600' }}
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                  <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                <span
+                  className="uppercase text-gray-500"
+                  style={{ fontSize: 10, letterSpacing: '0.25em' }}
+                >
+                  Backend waking up…
+                </span>
+                <span style={{ fontSize: 10, color: '#E10600', fontVariantNumeric: 'tabular-nums', minWidth: 28, textAlign: 'right' }}>
+                  {pct}%
+                </span>
+              </div>
+
+              {/* Progress bar */}
+              <div
+                className="rounded-full overflow-hidden"
+                style={{ width: '100%', height: 3, background: 'rgba(255,255,255,0.06)' }}
+              >
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${pct}%`,
+                    background: 'linear-gradient(90deg, #7a0300 0%, #E10600 100%)',
+                    transition: 'width 0.1s linear',
+                  }}
+                />
+              </div>
+            </motion.div>
           )}
         </motion.div>
       </div>
