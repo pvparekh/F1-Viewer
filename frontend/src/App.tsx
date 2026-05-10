@@ -11,16 +11,31 @@ import TopBar from './components/TopBar';
 import TrackHint from './components/TrackHint';
 import TopNav from './components/TopNav';
 import TrackMap from './components/TrackMap';
-import { useRaceWebSocket } from './hooks/useRaceWebSocket';
-import { RaceMetadata, Session, TrackPoint } from './types';
+import { RaceAsset, useRacePlayback } from './hooks/useRacePlayback';
+import { Session, TrackPoint } from './types';
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000';
+const SESSIONS: Session[] = [
+  { year: 2023, round: 8,  name: 'Monaco Grand Prix'   },
+  { year: 2023, round: 10, name: 'British Grand Prix'   },
+  { year: 2024, round: 1,  name: 'Bahrain Grand Prix'   },
+  { year: 2024, round: 12, name: 'British Grand Prix'   },
+  { year: 2024, round: 16, name: 'Italian Grand Prix'   },
+];
+
+// Maps {year}_{round} → GitHub Release tag + filename prefix
+const RACE_ID_MAP: Record<string, RaceAsset> = {
+  '2023_8':  { tag: '2023-monaco',      file: '2023_8'  },
+  '2023_10': { tag: '2023-silverstone', file: '2023_10' },
+  '2024_1':  { tag: '2024-bahrain',     file: '2024_1'  },
+  '2024_12': { tag: '2024-silverstone', file: '2024_12' },
+  '2024_16': { tag: '2024-monza',       file: '2024_16' },
+};
 
 const CIRCUIT_LOCATIONS: Record<string, string> = {
-  'Monaco Grand Prix': 'Monte Carlo, Monaco',
-  'British Grand Prix': 'Silverstone, England',
-  'Italian Grand Prix': 'Monza, Italy',
-  'Bahrain Grand Prix': 'Sakhir, Bahrain',
+  'Monaco Grand Prix':   'Monte Carlo, Monaco',
+  'British Grand Prix':  'Silverstone, England',
+  'Italian Grand Prix':  'Monza, Italy',
+  'Bahrain Grand Prix':  'Sakhir, Bahrain',
   'Singapore Grand Prix': 'Marina Bay, Singapore',
 };
 
@@ -30,16 +45,17 @@ const EMPTY_TRACK: TrackPoint[] = [];
 export default function App() {
   const [viewMode, setViewMode] = useState<'landing' | 'viewer'>('landing');
   const [selectedRace, setSelectedRace] = useState<Session | null>(null);
-  const [metadata, setMetadata] = useState<RaceMetadata | null>(null);
-  const [metaLoading, setMetaLoading] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [selectedDriver, setSelectedDriver] = useState<string | null>(null);
   const [showPreRace, setShowPreRace] = useState(false);
   const [raceStarted, setRaceStarted] = useState(false);
-  const [sessions, setSessions] = useState<Session[]>([]);
   const [showKeyboardHints, setShowKeyboardHints] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [followingDriver, setFollowingDriver] = useState<string | null>(null);
+
+  const raceAsset = selectedRace
+    ? (RACE_ID_MAP[`${selectedRace.year}_${selectedRace.round}`] ?? null)
+    : null;
 
   const {
     currentFrameRef,
@@ -52,30 +68,11 @@ export default function App() {
     isLoading,
     isEnded,
     errorMessage,
+    raceMetadata,
     sendAction,
-  } = useRaceWebSocket(selectedRace?.year ?? null, selectedRace?.round ?? null);
+  } = useRacePlayback(raceAsset);
 
-  useEffect(() => {
-    fetch(`${API_URL}/api/sessions`)
-      .then(r => r.json())
-      .then((data: Session[]) => setSessions(data))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (!selectedRace) return;
-    setMetadata(null);
-    setMetaLoading(true);
-    fetch(`${API_URL}/api/sessions/${selectedRace.year}/${selectedRace.round}/metadata`)
-      .then(r => r.json())
-      .then((d: RaceMetadata) => {
-        setMetadata(d);
-        setMetaLoading(false);
-      })
-      .catch(() => setMetaLoading(false));
-  }, [selectedRace]);
-
-  const isReady = !isLoading && totalFrames > 0 && metadata !== null;
+  const isReady = !isLoading && totalFrames > 0 && raceMetadata !== null;
 
   // Refs so the keyboard handler never captures stale values
   const kbRef = useRef({
@@ -153,7 +150,7 @@ export default function App() {
     }
   }, []);
 
-  const totalLaps = metadata?.total_laps ?? 0;
+  const totalLaps = raceMetadata?.total_laps ?? 0;
 
   // Auto-show results when leader completes final lap
   useEffect(() => {
@@ -181,7 +178,6 @@ export default function App() {
     setRaceStarted(false);
     setShowPreRace(false);
     setShowResults(false);
-    setMetadata(null);
   }
 
   function handleRaceStart() {
@@ -198,8 +194,8 @@ export default function App() {
 
   const handleDriverClose = useCallback(() => setSelectedDriver(null), []);
 
-  const driverColors = metadata?.driver_colors ?? EMPTY_COLORS;
-  const trackPoints = metadata?.track_points ?? EMPTY_TRACK;
+  const driverColors = raceMetadata?.driver_colors ?? EMPTY_COLORS;
+  const trackPoints = raceMetadata?.track_points ?? EMPTY_TRACK;
   const raceName = selectedRace?.name ?? '';
   const circuitLocation = raceName ? (CIRCUIT_LOCATIONS[raceName] ?? raceName) : '';
 
@@ -218,7 +214,7 @@ export default function App() {
       <TopNav
         mode={viewMode}
         currentRace={selectedRace ?? undefined}
-        sessions={sessions}
+        sessions={SESSIONS}
         onBackToLanding={handleBackToLanding}
         onSelectRace={handleRaceSelect}
       />
@@ -226,7 +222,7 @@ export default function App() {
       {/* ── Landing ────────────────────────────────────────────────────── */}
       {viewMode === 'landing' && (
         <div className="flex-1 min-h-0 overflow-y-auto z-10">
-          <RaceCardGrid sessions={sessions} onSelectRace={handleRaceSelect} />
+          <RaceCardGrid sessions={SESSIONS} onSelectRace={handleRaceSelect} />
         </div>
       )}
 
@@ -308,8 +304,8 @@ export default function App() {
             )}
           </AnimatePresence>
 
-          {/* Loading overlay before metadata arrives */}
-          {metaLoading && (
+          {/* Loading overlay while race JSON downloads */}
+          {isLoading && !raceStarted && (
             <div className="absolute inset-0 flex items-center justify-center bg-[#0a0a0a]/80 z-20">
               <span className="text-xs uppercase tracking-widest text-gray-500 animate-pulse">
                 Loading race data…
@@ -319,7 +315,7 @@ export default function App() {
 
           {/* Race results overlay */}
           <AnimatePresence>
-            {showResults && metadata && (
+            {showResults && raceMetadata && (
               <RaceResults
                 key={`results-${selectedRace.year}-${selectedRace.round}`}
                 year={selectedRace.year}
