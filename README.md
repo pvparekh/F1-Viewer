@@ -7,8 +7,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)
 ![Live Demo](https://img.shields.io/badge/Live_Demo-Online-brightgreen?style=flat)
 
-**[Live Demo](https://formulavision.vercel.app)** • **[API Docs](https://formula-vision-backend.onrender.com/docs)** • **[Video Demo](#)**
-
+**[Live Demo](https://formulavision.vercel.app)** 
 ---
 
 ## 🎬 Demo
@@ -242,5 +241,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 - **[FastF1](https://github.com/theOehrly/Fast-F1)** — Python library providing access to official F1 timing, telemetry, and session data
 - **[Vercel](https://vercel.com)** & **[Render](https://render.com)** — Generous free tiers that make zero-cost full-stack deployment possible
 - The F1 community whose enthusiasm for data makes projects like this worth building
-   
+  
+ 
  
