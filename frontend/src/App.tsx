@@ -273,8 +273,8 @@ export default function App() {
               onClose={handleDriverClose}
             />
 
-            {/* Quick guide — right side, hidden when driver detail is open */}
-            <TrackHint visible={raceStarted && !selectedDriver} />
+            {/* Quick guide — slides left when driver detail is open */}
+            <TrackHint visible={raceStarted} driverPanelOpen={!!selectedDriver} />
           </div>
 
           {/* Bottom: playback bar */}

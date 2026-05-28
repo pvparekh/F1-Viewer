@@ -140,18 +140,6 @@ export default function DriverDetail({
     <AnimatePresence>
       {driverCode && (
         <>
-          {/* Backdrop */}
-          <motion.div
-            key="driver-backdrop"
-            className="absolute inset-0 z-20"
-            style={{ background: 'rgba(0,0,0,0.25)' }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-          />
-
           {/* Panel */}
           <motion.div
             key="driver-detail"

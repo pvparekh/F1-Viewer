@@ -607,7 +607,7 @@ const TrackMap = memo(function TrackMap({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="pointer-events-none absolute top-4 left-1/2 z-30 -translate-x-1/2"
+            className="pointer-events-none absolute top-4 left-4 z-30"
           >
             <div
               className="flex items-center gap-3 rounded-full border border-white/10 px-4 py-2"
