@@ -1,3 +1,3 @@
-﻿backend/
-*.json
-**/*.json
+.vercel/
+backend/
+F1RaceViewer/computed_data/
