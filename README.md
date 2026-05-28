@@ -7,7 +7,8 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)
 ![Live Demo](https://img.shields.io/badge/Live_Demo-Online-brightgreen?style=flat)
 
-**[Live Demo](https://formulavision.vercel.app)** 
+**[Live Demo](https://formulavision.vercel.app)**
+
 ---
 
 ## 🎬 Demo
@@ -15,9 +16,6 @@
 **[→ Try it live at formulavision.vercel.app](https://formulavision.vercel.app)**
 
 > **Note:** First load may take 30–60s (free-tier cold start) — worth the wait!
-
-<!-- Screenshots coming soon -->
-<!-- ![Formula Vision Screenshot](docs/screenshot.png) -->
 
 ---
 
@@ -29,7 +27,9 @@
 - **WebSocket streaming architecture** — server pushes frames as fast as your chosen playback speed
 
 ### Interactive Controls
-- **Camera follow system** with 2.5× zoom that tracks any driver around the circuit
+- **Camera follow system** with 2.5× zoom that tracks any driver around the circuit; active driver shown in a **FOLLOWING** badge pinned top-left next to the timing grid
+- **Driver detail panel** — slides in from the right with team-colored driver number (Orbitron font), fastest lap, position history charts, and laps led; no dim overlay on the race behind it
+- **Quick Guide** — anchored bottom-right; smoothly slides to bottom-left when the driver panel is open so both are always visible at once
 - **Netflix-style playback bar** — play/pause, ±10s skip, 0.5×–4× speed control
 - **Seek anywhere** in the race timeline with a scrubber
 - **Keyboard shortcuts** — `Space` play/pause · `←/→` seek · `1–4` speed · `F` fullscreen · `?` help
@@ -38,7 +38,6 @@
 - **Live timing tower ("The Grid")** with animated real-time position updates
 - **Position change tracking** — green ↑ / red ↓ arrows vs. starting grid
 - **Fastest lap detection** — race-level best lap shown with a purple flash on new records
-- **Driver detail panel** — team-colored driver number (Orbitron font), fastest lap, position history charts, laps led
 - **Verified race results** fetched live from the FastF1 API with official finishing times and points
 
 ---
